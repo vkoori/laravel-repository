@@ -21,6 +21,9 @@ composer require vkoori/laravel-repository
 2. Create a Model-Specific Repository
 
 ```php
+/**
+ * @extends BaseRepository<User, UserDTO>
+ */
 class UserRepository extends BaseRepository
 {
     protected function getModel(): User

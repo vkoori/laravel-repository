@@ -11,6 +11,7 @@ use Vkoori\EntityDto\BaseDTO;
 /**
  * @template TModel of Model
  * @template TDto of BaseDTO
+ * @implements BaseRepositoryInterface<TModel, TDto>
  */
 abstract class BaseRepository implements BaseRepositoryInterface
 {
