@@ -4,7 +4,7 @@ namespace Vkoori\Repository;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Vkoori\EntityDto\BaseDTO;
 
