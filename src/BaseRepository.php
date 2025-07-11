@@ -39,9 +39,13 @@ abstract class BaseRepository implements BaseRepositoryInterface
      * @param array $relations
      * @return Collection<TDTO>
      */
-    public function get(?BaseDTO $conditions = null, array $relations = []): Collection
-    {
-        return $this->fetchData($conditions, $relations)
+    public function get(
+        ?BaseDTO $conditions = null,
+        array $relations = [],
+        ?string $sortBy = null,
+        bool $sortDescending = true
+    ): Collection {
+        return $this->fetchData($conditions, $relations, $sortBy, $sortDescending)
             ->get()
             ->map(fn($model) => $this->getDTO()::fromModel($model));
     }
@@ -50,11 +54,16 @@ abstract class BaseRepository implements BaseRepositoryInterface
      * @param BaseDTO|null $conditions
      * @param array $relations
      * @param int|null $perPage
-     * @return LengthAwarePaginator
+     * @return LengthAwarePaginator<TDTO>
      */
-    public function paginate(?BaseDTO $conditions = null, array $relations = [], ?int $perPage = null): LengthAwarePaginator
-    {
-        $paginator = $this->fetchData($conditions, $relations)->paginate($perPage);
+    public function paginate(
+        ?BaseDTO $conditions = null,
+        array $relations = [],
+        ?int $perPage = null,
+        ?string $sortBy = null,
+        bool $sortDescending = true
+    ): LengthAwarePaginator {
+        $paginator = $this->fetchData($conditions, $relations, $sortBy, $sortDescending)->paginate($perPage);
 
         $paginator->getCollection()->transform(fn($model) => $this->getDTO()::fromModel($model));
 
@@ -90,7 +99,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
      */
     public function first(?BaseDTO $conditions = null, array $relations = []): ?BaseDTO
     {
-        $model = $this->fetchData($conditions, $relations)->first();
+        $model = $this->fetchData($conditions, $relations, null, null)->first();
         return $model ? $this->getDTO()::fromModel($model) : null;
     }
 
@@ -101,18 +110,18 @@ abstract class BaseRepository implements BaseRepositoryInterface
      */
     public function firstOrFail(?BaseDTO $conditions = null, array $relations = []): BaseDTO
     {
-        $model = $this->fetchData($conditions, $relations)->firstOrFail();
+        $model = $this->fetchData($conditions, $relations, null, null)->firstOrFail();
         return $this->getDTO()::fromModel($model);
     }
 
     public function count(?BaseDTO $conditions = null): int
     {
-        return $this->fetchData($conditions, [])->count();
+        return $this->fetchData($conditions, [], null, null)->count();
     }
 
     public function exists(?BaseDTO $conditions = null): bool
     {
-        return $this->fetchData($conditions, [])->exists();
+        return $this->fetchData($conditions, [], null, null)->exists();
     }
 
     /**
@@ -185,17 +194,21 @@ abstract class BaseRepository implements BaseRepositoryInterface
 
     public function batchUpdate(BaseDTO $conditions, BaseDTO $values): int
     {
-        return $this->fetchData($conditions, [])->update($values->toArray());
+        return $this->fetchData($conditions, [], null, null)->update($values->toArray());
     }
 
     public function batchDelete(BaseDTO $conditions): int
     {
-        return $this->fetchData($conditions, [])->delete();
+        return $this->fetchData($conditions, [], null, null)->delete();
     }
 
-    private function fetchData(?BaseDTO $conditions, array $relations)
-    {
-        return $this
+    private function fetchData(
+        ?BaseDTO $conditions,
+        array $relations,
+        ?string $sortBy,
+        ?bool $sortDescending
+    ) {
+        $query = $this
             ->getModel()
             ->query()
             ->when(
@@ -203,5 +216,19 @@ abstract class BaseRepository implements BaseRepositoryInterface
                 fn($query) => $query->where($conditions->toArray())
             )
             ->with($relations);
+
+        if (!is_null($sortDescending)) {
+            $query->orderBy(
+                $sortBy ?: $this->getDefaultSortColumn(),
+                $sortDescending ? 'desc' : 'asc'
+            );
+        }
+
+        return $query;
+    }
+
+    private function getDefaultSortColumn(): string
+    {
+        return $this->getModel()->getCreatedAtColumn() ?? 'id';
     }
 }

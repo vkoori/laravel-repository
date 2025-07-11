@@ -6,20 +6,26 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Vkoori\EntityDto\BaseDTO;
 
-/**
- * @template TModel
- * @template TDTO
- */
 interface BaseRepositoryInterface
 {
     public function create(BaseDTO $attributes): BaseDTO;
 
-    /**
-     * @return Collection<TDTO>
-     */
-    public function get(?BaseDTO $conditions = null, array $relations = []): Collection;
+    /** @return Collection<BaseDTO> */
+    public function get(
+        ?BaseDTO $conditions = null,
+        array $relations = [],
+        ?string $sortBy = null,
+        bool $sortDescending = true
+    ): Collection;
 
-    public function paginate(?BaseDTO $conditions = null, array $relations = [], ?int $perPage = null): LengthAwarePaginator;
+    /** @return LengthAwarePaginator<BaseDTO> */
+    public function paginate(
+        ?BaseDTO $conditions = null,
+        array $relations = [],
+        ?int $perPage = null,
+        ?string $sortBy = null,
+        bool $sortDescending = true
+    ): LengthAwarePaginator;
 
     public function findById(int $modelId, array $relations = []): ?BaseDTO;
 
@@ -41,9 +47,7 @@ interface BaseRepositoryInterface
 
     public function deleteById(int $modelId): bool;
 
-    /**
-     * @param array<BaseDTO> $values
-     */
+    /** @param array<BaseDTO> $values */
     public function batchInsert(array $values): bool;
 
     public function batchUpdate(BaseDTO $conditions, BaseDTO $values): int;
